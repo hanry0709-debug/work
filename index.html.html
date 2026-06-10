@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>茂順企業 - 新進員工職涯導航系統 v2.0</title>
+    <style>
+        :root {
+            --primary: #1e3d59;
+            --accent: #17b978;
+            --secondary: #ff6f61;
+            --bg-gradient: linear-gradient(135deg, #f5f7fa 0%, #e2ebf0 100%);
+        }
+        
+        body { 
+            font-family: 'Microsoft JhengHei', Arial, sans-serif; 
+            background: var(--bg-gradient);
+            color: #333; 
+            margin: 0; 
+            padding: 40px 20px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .container { 
+            max-width: 750px; 
+            width: 100%;
+            background: white; 
+            padding: 40px; 
+            border-radius: 20px; 
+            box-shadow: 0 15px 35px rgba(0,0,0,0.1); 
+            text-align: center;
+        }
+
+        h1 { color: var(--primary); font-size: 28px; margin-bottom: 10px; }
+        .subtitle { color: #777; margin-bottom: 30px; font-size: 16px; }
+
+        /* 表單輸入區 */
+        .input-group { background: #f8fafc; padding: 25px; border-radius: 15px; margin-bottom: 20px; border: 1px solid #e2e8f0; text-align: left; }
+        .form-row { margin-bottom: 15px; }
+        label { display: block; font-weight: bold; margin-bottom: 8px; color: var(--primary); }
+        input[type="text"], select { width: 100%; padding: 12px; border-radius: 8px; border: 2px solid #ddd; font-size: 16px; outline: none; box-sizing: border-box; transition: 0.3s; }
+        input[type="text"]:focus, select:focus { border-color: var(--primary); }
+
+        /* 按鈕樣式 */
+        button { padding: 12px 30px; border-radius: 30px; border: none; font-weight: bold; font-size: 16px; cursor: pointer; transition: 0.3s; margin: 10px 5px; }
+        .btn-step1 { background: var(--primary); color: white; width: 100%; margin-top: 10px; }
+        .btn-step1:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(30,61,89,0.3); }
+        .btn-step2 { background: var(--accent); color: white; display: none; }
+        .btn-step2:hover { transform: scale(1.05); }
+        .btn-feedback { background: #e2e8f0; color: #4a5568; font-size: 14px; padding: 8px 20px; }
+        .btn-feedback:hover { background: #cbd5e1; }
+
+        /* 動態效果 */
+        .fade-in-up { animation: fadeInUp 0.6s ease forwards; display: none; opacity: 0; }
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* 結果顯示區 */
+        .result-box { margin-top: 30px; padding: 25px; background: #f0f7f4; border-radius: 15px; text-align: left; }
+        .ability-detail { background: white; padding: 20px; border-radius: 8px; margin-top: 10px; box-shadow: inset 4px 0 0 var(--accent); border: 1px solid #e2e8f0; }
+        .feedback-status { color: var(--accent); font-weight: bold; margin-top: 10px; display: none; text-align: center; }
+
+        /* 夥伴推薦卡片 */
+        .partner-card { margin-top: 25px; padding: 30px; background: var(--primary); color: white; border-radius: 15px; position: relative; text-align: left; box-shadow: 0 10px 25px rgba(30,61,89,0.2); }
+        .match-badge { position: absolute; top: 15px; right: 15px; background: rgba(255,255,255,0.2); padding: 5px 12px; border-radius: 20px; font-size: 13px; font-weight: bold; color: #fff; border: 1px solid rgba(255,255,255,0.4); }
+        .partner-name { font-size: 24px; font-weight: bold; margin-bottom: 5px; }
+        .partner-job { color: var(--accent); font-weight: bold; font-size: 14px; }
+        .motto { font-style: italic; color: #cbd5e1; margin: 15px 0; border-left: 3px solid var(--accent); padding-left: 15px; line-height: 1.5; }
+
+        #loader { display: none; margin: 20px 0; font-weight: bold; color: var(--primary); font-size: 16px; }
+        .dot { animation: blink 1s infinite; }
+        @keyframes blink { 0%, 100% { opacity: 0; } 50% { opacity: 1; } }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>🧬 茂順企業 - 新進員工職涯導航</h1>
+    <p class="subtitle">歡迎加入茂順！請填寫基本資料，解鎖你的職場原力，並隨機配對最適合或互補的學長姐夥伴！</p>
+    
+    <div class="input-group">
+        <div class="form-row">
+            <label for="userName">1. 請輸入你的姓名/暱稱：</label>
+            <input type="text" id="userName" placeholder="例如：王小明">
+        </div>
+        <div class="form-row">
+            <label for="userInterest">2. 請輸入你的興趣愛好（會與學長姐連動唷）：</label>
+            <input type="text" id="userInterest" placeholder="例如：打羽球、看電影、品嚐美食">
+        </div>
+        <div class="form-row">
+            <label for="mbtiSelect">3. 請選擇你的 MBTI 人格類型：</label>
+            <select id="mbtiSelect"></select>
+        </div>
+        <button class="btn-step1" onclick="analyzeStep1()">第一步：解鎖我的詳細強項</button>
+    </div>
+
+    <div id="resultBox" class="fade-in-up">
+        <div class="result-box">
+            <h3 style="margin-top:0; color: var(--primary);">✨ <span id="userNameSpan"></span> 的職場核心特質：<span id="resTitle"></span></h3>
+            <div class="ability-detail">
+                <strong>🔍 深度專業能力分析：</strong>
+                <p id="resAbility" style="margin: 8px 0 0 0; line-height: 1.7; color:#4a5568;"></p>
+            </div>
+            <p style="margin-top: 15px;"><strong>🎨 登記的個人興趣：</strong> <span id="resInterest" style="color:#2d3748; font-weight: bold;"></span></p>
+            
+            <div style="margin-top: 25px; border-top: 1px solid #e2e8f0; padding-top: 20px; text-align: center;">
+                <span style="font-size: 14px; color:#666; margin-right: 10px;">這份強項分析準確嗎？</span>
+                <button class="btn-feedback" onclick="sendFeedback('超準！完全就是我')">🎯 超準！完全就是我</button>
+                <button class="btn-feedback" onclick="sendFeedback('還好，有一半符合')">🤔 還好，有一半符合</button>
+                <div id="feedbackStatus" class="feedback-status">感謝您的即時回饋！本數據已匿名納入人資處系統優化。</div>
+            </div>
+        </div>
+        <center><button id="btnFindPartner" class="btn-step2" onclick="startMatching()">第二步：隨機媒合我的茂順夥伴</button></center>
+    </div>
+
+    <div id="loader">🧠 正在從 32 位茂順菁英中尋找靈魂共鳴<span class="dot">...</span></div>
+
+    <div id="partnerBox" class="fade-in-up">
+        <div class="partner-card">
+            <div class="match-badge" id="matchBadge"></div>
+            <div class="partner-job" id="partnerJob"></div>
+            <div class="partner-name" id="partnerName"></div>
+            <div class="motto" id="partnerMotto"></div>
+            <p style="line-height: 1.6;"><strong>💬 學長姐悄悄話：</strong><br><span id="partnerVoice" style="color: #f8fafc;"></span></p>
+            <p style="font-size: 14px; color: var(--accent); margin-top:20px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 15px;">🔥 推薦理由：<span id="partnerReason" style="color:white; font-weight: normal;"></span></p>
+        </div>
+    </div>
+</div>
+
+<script>
+// 擴充為 32 位學長姐資料庫（每種 MBTI 均有「適合類型」與「互補類型」）
+const mbtiDatabase = {
+    "INTJ": { title: "INTJ (戰略大師)", 
+        ability: "【頂層戰略規劃與系統性解構】具備極強的宏觀思維。能一眼看穿複雜專案的潛在漏洞，擅長將混亂的業務流程進行標準化與優化，能為公司制定長達三至五年的長期技術或商業發展計畫，不盲從經驗，純粹以數據與邏輯導向為核心。", 
+        partners: [
+            { name: "艾利斯 Alex", job: "戰略規劃部 經理", target: "適合配對 ➔ INTJ", motto: "「沒有解決不了的問題，只有不夠完美的計畫。」", voice: "嗨！{name}。聽說你也喜歡{interest}？在茂順，我不希望你只當一顆螺絲釘，我會教你如何畫出整台機器的藍圖。我們一起用數據說話。", reason: "相同的思維頻率，Alex 最懂你的宏觀理想，能直接給你最高的戰略信任。" },
+            { name: "莉娜 Lina", job: "全球業務部 資深商務談判官", target: "互補配對 ➔ ENFP", motto: "「邏輯能帶你從 A 到 B，但熱情能帶你到任何地方。」", voice: "哈囉 {name}！聽說你對{interest}很拿手？你那縝密的腦袋配上我開拓市場的衝勁，絕對是完美的黃金戰隊，我會帶你體驗前線的刺激！", reason: "外向熱情的 Lina 能補足你的社交盲區，將你完美的戰略計劃成功推銷出去。" }
+        ]},
+    "INTP": { title: "INTP (邏輯學家)", 
+        ability: "【核心技術研發與底層邏輯排查】天生的問題解決者。對新技術、新工具具有極高的敏銳度，擅長進行底層代碼的疑難排解（Troubleshooting）。能夠將企業內繁瑣的手工流程，透過撰寫自動化腳本或工具徹底解放，是研發團隊的秘密武器。", 
+        partners: [
+            { name: "泰勒 Taylor", job: "研發中心 首席工程師", target: "適合配對 ➔ INTP", motto: "「為什麼？是世界上最有力量的一個字。」", voice: "太好了 {name}，看來我們都對{interest}感興趣。別擔心那些繁文縟節，來我的實驗室，我們一起把新技術拆開重組！", reason: "Taylor 最欣賞熱愛鑽研底層技術的人，他能帶你跳過職場社交，專注在純粹的技術突破。" },
+            { name: "強森 Johnson", job: "福委會 執行秘書", target: "互補配對 ➔ ESFJ", motto: "「技術重要，但技術背後的人更重要。」", voice: "嘿 {name}！聽人資說你平常喜歡{interest}？研發之餘別忘了來參加活動放鬆一下。技術交給你，團隊的人際與後勤交給我來罩！", reason: "熱心體貼的 Johnson 能幫你處理好複雜的職場人際，讓你無後顧之憂地專注研發。" }
+        ]},
+    "ENTJ": { title: "ENTJ (天生統帥)", 
+        ability: "【高壓專案統籌與果斷資源配置】強大的決策者與推動者。在面臨時間緊迫、資源匱乏的高壓環境下，能迅速理出優先順序，果斷調配部門人力物力。具備高度的抗壓性與結果導向思維，能帶領跨部門團隊克服障礙，使命必達。", 
+        partners: [
+            { name: "凱薩琳 Kathy", job: "專案管理部 總監", target: "適合配對 ➔ ENTJ", motto: "「卓越不是一種行為，而是一種習慣。」", voice: "歡迎來到前線，{name}！我也喜歡{interest}，這需要極大的專注力。在茂順，只要你拿出成績，我就給你最大的舞台。準備好跟我一起攻下市場了嗎？", reason: "Kathy 能引導你的野心，將你的管理天賦轉化為真實的企業專案戰果。" },
+            { name: "小艾 Iris", job: "企業文化與員工關懷 專員", target: "互補配對 ➔ INFP", motto: "「溫柔的傾聽，有時比強悍的命令更有力量。」", voice: "你好呀 {name}！在衝刺 KPI 的同時，如果覺得壓力大，隨時找我聊聊{interest}。我會是你最棒的避風港，幫你調和團隊的氣氛。", reason: "富有同理心的 Iris 能平衡你過於追求效率的剛烈性格，幫助你建立更具向心力的團隊。" }
+        ]},
+    "ENTP": { title: "ENTP (遠見發明家)", 
+        ability: "【破壞式創新與市場藍海洞察】點子製造機。不喜歡循規蹈矩，擅長從市場最新趨勢中捕捉到常人忽略的商機。在公司開發新產品、開拓新業務的「從 0 到 1」階段，能提供源源不絕的非傳統解決方案，極具談判與說服天分。", 
+        partners: [
+            { name: "麥克斯 Max", job: "創新產品處 產品經理", target: "適合配對 ➔ ENTP", motto: "「如果每個人想的都一樣，那表示有人沒在動腦。」", voice: "嘿 {name}！聽說你有很多搞怪的點子，而且我們都喜歡{interest}？太棒了。在我的團隊裡，沒有不可能。我們一起來顛覆一下現有的產品線！", reason: "Max 擁有豐富的公司內部資源，能幫你那些天馬行空的鬼點子成功「變現」落地。" },
+            { name: "克里斯 Chris", job: "風控審計部 資深主任", target: "互補配對 ➔ ISFJ", motto: "「精彩的創意需要堅固的城牆保護。」", voice: "歡迎加入，{name}。你的點子非常驚艷，但別忘了魔鬼藏在細節裡。你負責大膽作夢、鑽研{interest}，我負責幫你把關法規與合約，當你最強的後盾！", reason: "極度細心的 Chris 能幫你收尾、查漏補缺，讓你免於因大意而踩到法規地雷。" }
+        ]},
+    "INFJ": { title: "INFJ (心靈導師)", 
+        ability: "【組織願景建立與深層動機洞察】深刻的傾聽者與思想家。能精準捕捉團隊成員或客戶隱藏在言語背後的真實情感與需求。在企業文化建設、員工關係維護、以及長期品牌價值定位上，能提供極具深度且具備高度人文關懷的見解。", 
+        partners: [
+            { name: "蘇菲亞 Sophia", job: "人力資源部 諮商師", target: "適合配對 ➔ INFJ", motto: "「當你走得太快，別忘了停下來等等你的靈魂。」", voice: "你好，{name}。能遇到同樣熱愛{interest}的同仁真的很難得。別被初入職場的高節奏嚇到了，我會陪著你找到你在茂順的專屬定位。", reason: "Sophia 與你擁有相同的內在頻率，她能成為你最堅實的職場心靈後盾。" },
+            { name: "羅伊 Roy", job: "大中國區 市場開發總監", target: "互補配對 ➔ ESTP", motto: "「想得再多，都不如直接上場打一仗。」", voice: "嗨 {name}！聽說你平常喜歡{interest}？別總是悶在辦公室思考人生了，跟我去第一線跟客戶談判，保證讓你看到不一樣的世界，體驗實戰的熱血！", reason: "行動派的 Roy 能帶你打破內向的殼，將你深刻的洞察力轉化為實實在在的市場影響力。" }
+        ]},
+    "INFP": { title: "INFP (理想主義者)", 
+        ability: "【品牌故事賦能與細膩價值傳遞】文化與文字的魔法師。能將生硬、冰冷的企業技術或 ESG 目標，轉化為溫暖、感人且具備極強傳播力的故事。高度重視工作的內在價值，在需要高度創意、同理心與品牌形象美化的崗位上表現卓越。", 
+        partners: [
+            { name: "露西 Lucy", job: "企業永續(ESG) 專員", target: "適合配對 ➔ INFP", motto: "「善良比聰明更難，而美可以拯救世界。」", voice: "能在這遇到像你一樣心思細膩的新同仁真好，{name}。有空一起交流{interest}吧。我正需要你的文筆與創意，讓我們一起讓茂順更有溫度。", reason: "Lucy 重視靈魂與價值的契合，她會營造一個完全不壓抑你天性的環境。" },
+            { name: "馬克 Mark", job: "智慧製造 自動化生產線總指揮", target: "互補配對 ➔ ESTJ", motto: "「效率與秩序，是保護情懷的最佳解。」", voice: "新同仁 {name} 你好。聽說你很有創意，工作之餘也喜歡{interest}。職場需要熱情，但更需要嚴謹的時程管理。跟我合作，我會教你如何高效執行計畫！", reason: "超強執行力的 Mark 能幫你把美好的理想與藍圖「具體落地」，不只流於空談。" }
+        ]},
+    "ENFJ": { title: "ENFJ (精神領袖)", 
+        ability: "【跨部門向心力凝聚與公眾演說】天生的團隊黏著劑。擁有強大的演說細胞與情感煽動力量，能夠激勵同仁朝向共同目標前進。在跨部門溝通卡關時，能發揮強大的人際協調能力，輕鬆化解衝突，建立高情商的合作氛圍。", 
+        partners: [
+            { name: "歐文 Owen", job: "企業培訓部 主管", target: "適合配對 ➔ ENFJ", motto: "「一個人的成功是亮點，一群人的成功是光芒。」", voice: "新同學 {name} 好！我也超喜歡{interest}的！走，我現在就帶你繞一圈辦公室，保證你下班前就能交到跨部門的好朋友。有什麼事隨時找學長！", reason: "Owen 會毫無保留地將他經營多年的人脈存摺分享給你，帶你快速融入。" },
+            { name: "漢克 Hank", job: "數據分析與資安防護 專家", target: "互補配對 ➔ ISTP", motto: "「數據不會說謊，冷靜是最高級的幽默。」", voice: "（點頭）{name} 你好。你很有活力。如果你在社交上累了，或是想鑽研{interest}，可以來我的機房坐坐。遇到難搞的系統 Bug，我幫你寫腳本搞定。", reason: "Hank 的冷靜客觀能適時拉住容易衝動的你，用硬核數據為你的熱情背書。" }
+        ]},
+    "ENFP": { title: "ENFP (追夢人)", 
+        ability: "【公關行銷策劃與高渲染力跨界合作】充滿能量的創意大使。擅長打破沉悶的職場氛圍，能將無趣的常態活動企劃成引爆社群話題的亮點。具備極強的公關天分，在對外品牌聯名、大型活動策劃與新世代客戶溝通上，能帶來無限活力。", 
+        partners: [
+            { name: "派屈克 Patrick", job: "行銷公關部 企劃", target: "適合配對 ➔ ENFP", motto: "「工作與生活，都應該是一場盛大的冒險！」", voice: "哇！部門終於來新血了，{name}！聽說你的興趣是{interest}？太酷了吧！我手頭上正好缺一個夥伴來規劃年度大秀，我們一起來搞大它！", reason: "Patrick 需要你的跳躍思維，你們兩個的組合將會是公關部最強的發光體。" },
+            { name: "維克多 Victor", job: "財務風控處 資深協理", target: "互補配對 ➔ ISTJ", motto: "「在預算之內跳舞，才是真正的藝術。」", voice: "你好 {name}。聽說你充滿新想法。創意很好，但財務報表也得漂亮。你盡情在職場與{interest}中揮灑創意，我會幫你拉好預算紅線，別擔心！", reason: "穩健的 Victor 能充當你的「煞車與安全氣囊」，確保你的大膽創意在財務與法規安全範圍內驚艷全場。" }
+        ]},
+    "ISTJ": { title: "ISTJ (中流砥柱)", 
+        ability: "【精準風險控管與標準化流程建立】企業的定海神針。對數字、法規與流程細節有著近乎完美的堅持。在財務審計、資產控管、或是生產製造的品質檢驗（QC）上，能展現無人能及的細心與耐心，確保公司營運不出現任何一絲法規風險。", 
+        partners: [
+            { name: "查理 Charlie", job: "財務會計部 部長", target: "適合配對 ➔ ISTJ", motto: "「細節決定成敗，精準是唯一的標準。」", voice: "做事就是要腳踏實地。{name}，聽說你平時喜歡{interest}，這也需要很大的耐心。跟我合作，我會把茂順累積三十年的精華流程手把手教給你。", reason: "Charlie 重視紀律與承諾，他能為你提供最清晰、最不易走彎路的職涯階梯。" },
+            { name: "戴斯蒙 Desmond", job: "跨國品牌 創意總監", target: "互補配對 ➔ ENFP", motto: "「規則是用來打破的，否則我們要大腦幹嘛？」", voice: "哈囉 {name}！你的嚴謹在公司可是出了名的。別把神經繃得那麼緊，下班跟我一起去玩{interest}！有時候跳出常規，你會發現全新的世界！", reason: "Desmond 充滿感染力的思維能幫你舒緩壓力，激發你意想不到的潛在創造力。" }
+        ]},
+    "ISFJ": { title: "ISFJ (守護者)", 
+        ability: "【全方位後勤支援與長期客戶關係維護】最可靠的後盾。具備極高的服務熱忱與責任感，能夠默默地將繁瑣的行政檔案、客戶抱怨處理得井井有條。能敏銳觀察到同仁或客戶的小需求並提前準備，是維持團隊日常高效率的無名英雄。", 
+        partners: [
+            { name: "艾咪 Amy", job: "客戶服務部 課長", target: "適合配對 ➔ ISFJ", motto: "「所有的偉大，都源於對平凡細節的照顧。」", voice: "來，{name}，這是我特地為你準備的新人辦公補給包。聽說你也喜歡{interest}？別怕問問題，我會手把手帶你熟悉各部門系統，放輕鬆！", reason: "Amy 的溫柔與包容，能完全化解你剛進公司對未知環境的恐懼。" },
+            { name: "雷克斯 Rex", job: "新興市場 獵人業務", target: "互補配對 ➔ ENTP", motto: "「不冒險，就是最大的風險。」", voice: "喲 {name}！聽說你心思最細膩了。新產品推廣需要你這種細心的後勤。走，工作結束我帶你去體驗點不一樣的，比如聊聊你的{interest}！", reason: "大膽開朗的 Rex 能帶你接觸更多元的人事物，拓展視野，幫你克服內向害羞。" }
+        ]},
+    "ESTJ": { title: "ESTJ (高效率執行官)", 
+        ability: "【高效率生產調度與常態流程優化】天生的專案推動將軍。極度重視時間管理、團隊紀律與結果產出。在工廠生產線調度、供應鏈管理等需要強大組織與執行力的崗位上，能迅速建立秩序、降低耗損，帶領團隊以最快速度達成 KPI。", 
+        partners: [
+            { name: "班傑明 Ben", job: "生產製造部 廠長", target: "適合配對 ➔ ESTJ", motto: "「不要找藉口，要找解決方法。」", voice: "我是班傑明。{name}，在現場我們講求紀律與安全。聽說你也熱愛{interest}？只要你肯學、不怕累，我保證你在這裡能學到最扎實的管理思維。", reason: "Ben 說一不二、極具肩膀，跟著他能讓你用最短時間在基層建立威信。" },
+            { name: "安妮 Annie", job: "同仁心理諮商與職涯規劃師", target: "互補配對 ➔ INFP", motto: "「每個冰冷的數字背後，都有一個跳動的心臟。」", voice: "你好，{name}。執行力強是你的優勢，但也別忘了多聽聽團隊的聲音。有空來找我聊聊{interest}，讓我幫你釋放高壓，學會用溫柔得人心。", reason: "溫暖體貼的 Annie 能幫助你優化領導風格，軟化剛硬的管理手段，深得部屬愛戴。" }
+        ]},
+    "ESFJ": { title: "ESFJ (溫暖貼心的大姐)", 
+        ability: "【行政資源高效協調與員工福利規劃】最具親和力的組織者。擅長跨部門的行政資源調度，能將複雜的同仁福利、公司大型年會採購處理得各方滿意。具備極強的職場人情世故洞察力，總能讓合作方在愉快的氣氛下配合工作。", 
+        partners: [
+            { name: "黛西 Daisy", job: "行政總務部 經理", target: "適合配對 ➔ ESFJ", motto: "/「快樂的同仁，才有高效的企業。」/", voice: "新進同仁 {name} 辛苦了！聽說你也喜歡{interest}，太好了！工作中遇到任何生活、車位或行政上的困難，儘管跟我說，黛西姐幫你想辦法！", reason: "Daisy 是公司的萬事通，跟著她你能最快掌握公司非正式的運作人脈。" },
+            { name: "佐伊 Zoe", job: "核心演算法 研發科學家", target: "互補配對 ➔ INTP", motto: "「遠離人群的嘈雜，才能聽見真理的聲音。」", voice: "你好 {name}。你很有活力，公司的大小活動你都辦得很棒。我比較不擅長社交，但如果你對{interest}或技術數據有興趣，我的大門隨時為你敞開。", reason: "冷靜專注的 Zoe 能帶你沉澱下來，提升你的數據分析思維與硬核專業實力。" }
+        ]},
+    "ISTP": { title: "ISTP (鑑識專家)", 
+        ability: "【危機即時排除與精密設備自動化維護】動手能力的天花板。面對突發的硬體故障、資安漏洞或生產線停機，能保持絕對的冷靜，在最短時間內找出物理性或邏輯上的病灶並動手修復。不愛高談闊論，純粹用高超的技術實力說話。", 
+        partners: [
+            { name: "雷伊 Ray", job: "資訊安全 設備工程師", target: "適合配對 ➔ ISTP", motto: "「廢話少一點，事情做完、程式會跑最重要。」", voice: "（抬頭看一眼）{name} 你好。辦公權限發好了。密碼在桌上。有硬體或 Bug 再找我。沒事的話，我們可以一起切磋一下{interest}。", reason: "Ray 討厭無效的社交，如果你想在茂順安靜地修煉成技術大師，他是最好的搭檔。" },
+            { name: "溫蒂 Wendy", job: "大客戶關係 拓展總監", target: "互補配對 ➔ ENFJ", motto: "「世界上沒有敲不開的門，只有不夠熱誠的心。」", voice: "哈囉 {name}！聽說你技術超強，還喜歡{interest}？別總待在機房嘛，跟我去跟客戶做技術簡報，你的專業加上我的親和力，絕對無往不利！", reason: "超級擅長社交的 Wendy 能把你包裝成技術專家推向台前，放大你的專業價值。" }
+        ]},
+    "ISFP": { title: "ISFP (藝術家)", 
+        ability: "【品牌視覺美學配置與使用者體驗(UI)優化】對美感與色彩具有天生的絕對直覺。能將枯燥的圖表、系統介面或展覽空間，透過視覺設計提升至國際級的品牌層次。重視創作時的個人空間與自由度，能敏銳捕捉當代潮流的視覺風向。", 
+        partners: [
+            { name: "莉莉 Lily", job: "視覺設計部 資深設計", target: "適合配對 ➔ ISFP", motto: "「在對稱中尋找平衡，在色彩中尋找靈魂。」", voice: "嗨，{name}。這個辦公室角落是我佈置的。聽說你的興趣也是{interest}？太棒了。如果不介意，下週的品牌視覺會議，一起來聊聊你的直覺想法吧。", reason: "Lily 不會給你死板的 KPI 壓力，她會營造一個充滿美學自由的空間讓你發揮。" },
+            { name: "阿甘 Gary", job: "海外專案 跨國調度總指揮", target: "互補配對 ➔ ENTJ", motto: "「計畫是死的，贏的戰略是打出來的。」", voice: "你好，{name}。你的設計很有靈魂！但要在商場上贏，時程與氣勢必須拿出來。工作結束我們去放鬆玩{interest}，但上班時，跟著我一起把進度飆起來！", reason: "Gary 強悍的節奏感與專案管理能力，能幫助你的美學作品在時限內完美交件。" }
+        ]},
+    "ESTP": { title: "ESTP (戰地英雄)", 
+        ability: "【第一線市場開拓與商務談判實戰】商場上的頂級獵人。具備無與倫比的現場動態觀察力，能一秒捕捉客戶談判時的眼神動搖，進而調整開價策略。對市場危機具備高超的臨場應變能力，敢衝敢撞，擅長處理棘手的大型客戶談判。", 
+        partners: [
+            { name: "傑克 Jack", job: "全球業務部 經理", target: "適合配對 ➔ ESTP", motto: "「贏家不是從不失敗，而是永不放棄前進。」", voice: "穿上西裝，{name}！下午跟我去客戶那邊跑一趟。別怕，你就看我怎麼談。聽說你也喜歡{interest}？這就需要這種不服輸的衝勁！出發！", reason: "Jack 會直接把你丟到含金量最高的實戰現場，讓你用身體記憶最強的業務技巧。" },
+            { name: "娜歐蜜 Naomi", job: "人資部 核心企業文化推動者", target: "互補配對 ➔ INFJ", motto: "「看清市場之前，先看清人的內心。」", voice: "嗨 {name}，聽說你非常有衝勁。但在談判桌上，有時候慢下來聆聽客戶的弦外之音更重要。下班我們一起去體驗{interest}，順便教你幾招讀心術！", reason: "深謀遠慮的 Naomi 能教你洞察人心，讓你的業務攻勢不再只是猛衝，而是能精準擊中客戶痛點。" }
+        ]},
+    "ESFP": { title: "ESFP (舞台焦點)", 
+        ability: "【現場活動氣氛帶動與全方位客戶體驗優化】天生的超級發光體。擁有極強的親和力與表演欲，能在最短時間內炒熱大型晚會或客戶說明會的現場氣氛。擅長運用富有感染力的語言進行產品簡報，讓聽眾不知不覺被熱情融化。", 
+        partners: [
+            { name: "山姆 Sam", job: "員工福利委員會 召集人", target: "適合配對 ➔ ESFP", motto: "「如果工作不好玩，那我們就動手創造好玩的！」", voice: "哈囉 {name}！歡迎加入茂順！聽說你的興趣是{interest}，天啊也太有趣了吧！今年的尾牙正缺一個像你這麼有特色的副主持，快加入我們！", reason: "Sam 會毫無保留地帶你參與公司最核心的活動，讓你的熱情在茂順被所有人看見。" },
+            { name: "文森 Vincent", job: "中央工廠 精密製程品管總監", target: "互補配對 ➔ INTJ", motto: "「熱情能點燃希望，但唯有嚴格的標準能維持基業。」", voice: "你好，{name}。我是文森。你的活潑很有感染力，但品管實驗室裡不容許任何一絲大意。上班時跟著我嚴謹實習，下班後我隨時歡迎你找我聊{interest}。", reason: "極度理性的文森能培養你對產線細節、數據品質的耐性，讓你的職場生涯站得更穩。" }
+        ]}
+};
+
+function analyzeStep1() {
+    const name = document.getElementById("userName").value.trim() || "新進同仁";
+    const interest = document.getElementById("userInterest").value.trim() || "探索新事物";
+    const selected = document.getElementById("mbtiSelect").value;
+    const data = mbtiDatabase[selected];
+    
+    // 渲染資料
+    document.getElementById("userNameSpan").innerText = name;
+    document.getElementById("resTitle").innerText = data.title;
+    document.getElementById("resAbility").innerText = data.ability;
+    document.getElementById("resInterest").innerText = interest;
+    
+    // 初始化狀態
+    document.getElementById("partnerBox").style.display = "none";
+    document.getElementById("feedbackStatus").style.display = "none";
+    document.getElementById("btnFindPartner").style.display = "inline-block";
+    
+    const box = document.getElementById("resultBox");
+    box.style.display = "block";
+    box.scrollIntoView({ behavior: 'smooth' });
+}
+
+function startMatching() {
+    document.getElementById("btnFindPartner").style.display = "none";
+    document.getElementById("loader").style.display = "block";
+    
+    // 延遲 1.2 秒展現媒合儀式感
+    setTimeout(() => {
+        document.getElementById("loader").style.display = "none";
+        showRandomPartner();
+    }, 1200);
+}
+
+function showRandomPartner() {
+    const name = document.getElementById("userName").value.trim() || "新進同仁";
+    const interest = document.getElementById("userInterest").value.trim() || "探索新事物";
+    const selected = document.getElementById("mbtiSelect").value;
+    
+    // 從該 MBTI 的適合與互補中「隨機抽選 1 位」(32個配對池的隨機機制)
+    const partnerList = mbtiDatabase[selected].partners;
+    const randomIndex = Math.floor(Math.random() * partnerList.length);
+    const chosenPartner = partnerList[randomIndex];
+    
+    // 將名字與客製化興趣帶入對話字串中
+    let customizedVoice = chosenPartner.voice.replace(/{name}/g, name).replace(/{interest}/g, interest);
+    
+    // 填入卡片
+    document.getElementById("matchBadge").innerText = chosenPartner.target;
+    document.getElementById("partnerJob").innerText = chosenPartner.job;
+    document.getElementById("partnerName").innerText = chosenPartner.name;
+    document.getElementById("partnerMotto").innerText = chosenPartner.motto;
+    document.getElementById("partnerVoice").innerText = customizedVoice;
+    document.getElementById("partnerReason").innerText = chosenPartner.reason;
+    
+    const box = document.getElementById("partnerBox");
+    box.style.display = "block";
+    box.scrollIntoView({ behavior: 'smooth' });
+}
+
+// 動態初始化 16 種選單
+const selectEl = document.getElementById("mbtiSelect");
+Object.keys(mbtiDatabase).sort().forEach(mbti => {
+    let option = document.createElement("option");
+    option.value = mbti;
+    option.textContent = mbti;
+    selectEl.appendChild(option);
+});
+
+function sendFeedback(type) {
+    const statusEl = document.getElementById("feedbackStatus");
+    statusEl.innerText = `已送出回饋：[${type}]！感謝您協助優化茂順新人資料庫。`;
+    statusEl.style.display = "block";
+}
+</script>
+</body>
+</html>
